@@ -1,0 +1,439 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!--<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/hostedfield.css') }}">-->
+
+<div class="wrapper">
+    <div class="checkout container">
+        
+        <!-- Header Message -->
+        <header>
+            <h2><br>Let's test a transaction</h2>
+            <p>Make a test payment with Pay with PayPal via Braintree</p>
+        </header>
+
+        <!-- FOR PwPP Checkout using gql: STC data passed in -->
+        <!--<form id="payment-form" method="post" action="/checkout_pp_gql">-->
+
+        <!-- FOR PwPP Checkout using SDK -->
+        <form id="payment-form" name="pwppform" method="post" action="/server/gql/checkout">
+
+            <section>
+                <label for="amount">
+                    <span class="input-label">Currency</span>    
+                    <input id="currency" name="currency" type="text" value='{{ currency }}'>
+                </label>
+                <label for="amount">
+                    <span class="input-label">Amount</span>
+                    <div class="input-wrapper amount-wrapper">
+                        <input id="amount" name="amount" type="tel" min="1" value="15.00">
+                    </div>
+                </label>
+
+                <br>
+                <div>Pay Later Message Appearing (No PL msg for pwpp vault)</div>
+                <div
+                    data-pp-message
+                    data-pp-buyerCountry="{{ country }}"
+                    data-pp-layout="text"
+                    data-pp-text-color="black"
+                    data-pp-logo-type="inline">
+                </div>
+
+                <!-- Select which type of pwpp button -->
+                <br><div id="ppbutton">Select your PayPal Button</div><br>
+                <div class="container" id="selections">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="vaultselect" id="vault1" value="o1">
+                        <label class="form-check-label" for="vault1">Vault</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="vaultselect" id="vault2" value="o2">
+                        <label class="form-check-label" for="vault2">Checkout_with_vault</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="vaultselect" id="vault3" value="o3">
+                        <label class="form-check-label" for="vault3">Checkout_with_PayPal</label>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="form-check" id="vault-pp-select" style="padding-top: 10px">
+                        <input class="form-check-input move-left" type="checkbox" value="N" id="vault-pp" name="vault-pp">
+                        <label class="form-check-label" for="vault-pp">Save PayPal for new PayPal Account</label>
+                    </div>
+                </div>
+                <br>
+                <div id="paypal-button"></div>
+                <div id="pl-button"></div>
+
+            </section>
+            <br>
+            <input type="hidden" id="nonce" name="payment_method_nonce" />
+            <input type="hidden" id="3ds_nonce" name="3ds_method_nonce" />
+            <input type="hidden" id="devicedata" name="device_data"/>
+            <button class="button" onclick="location.href='http://127.0.0.1:4567'" type="button">
+                <span style="background-color: grey;">Back to Home</span></button>
+        </form>
+     
+    </div>
+</div>
+
+<!-- partial -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js'></script>
+
+<!-- Braintree Client SDK & Device Data SDK -->
+<script src="https://js.braintreegateway.com/web/3.97.1/js/client.min.js"></script>
+<script src="https://js.braintreegateway.com/web/3.97.1/js/data-collector.min.js"></script>
+
+<!-- Load the PayPal Checkout component. -->
+<script src="https://js.braintreegateway.com/web/3.97.1/js/paypal-checkout.min.js"></script>
+
+<!-- Load the PayPal JS SDK with your PayPal Client ID. Alternatively can load paypalCheckoutInstance.loadPayPalSDK() -->
+<!-- vault=true mandatory for checkout with vault flow-->
+<!--<script src="https://www.paypal.com/sdk/js?client-id=Ad2lhjM0nKQGlmZR_qODmNYm5nxO3wvWE5xtUM_kyMS6ld0Cf6lbBXvgz9oq5rsKssyQKYs6yMUL6sYu"></script>-->
+
+<script>
+// define variables to pass in
+var client_id = '{{ client_id }}'
+var client_token = '{{ client_token }}';
+var riskCorrelationId = '{{ riskCorrelationId }}';
+var form = document.querySelector('#payment-form');
+var submit = document.querySelector('input[type="submit"]');
+let vault_pp;
+
+// Create a client & a PayPal Checkout component vault flow
+braintree.client.create({
+    // authorized by client_token from server end
+    authorization: client_token
+}, function (clientErr, clientInstance) {
+    // Stop if there was a problem creating the client.
+    // This could happen if there is a network error or if the authorization is invalid.
+    if (clientErr) {
+        console.error('Error creating client:', clientErr);
+        return;
+    }
+
+    // = to magnes & fraudnet, reduce decline (only need when using vault-only flow)
+    //braintree.dataCollector.create({
+    //    client: clientInstance,
+        //// STC for one-time payment GraphQL
+        //riskCorrelationId: riskCorrelationId,
+    //    paypal: true
+    //}, function (err, dataCollectorInstance) {
+    //    if (err) {    // Handle error in creation of data collectors
+    //        console.error(err);
+    //        return;
+    //    }
+        // At this point, you should access the dataCollectorInstance.deviceData value and provide it
+        // to your server, e.g. by injecting it into your form as a hidden input.
+    //    document.querySelector('#devicedata').value = dataCollectorInstance.deviceData;
+    //});
+
+    /////  Define Braintree SDK - PayPal    /////
+    form.addEventListener('change', (event) => { 
+        var curr = document.getElementById("currency").value; console.log(curr);
+        var amt = document.getElementById("amount").value; console.log(amt);
+        var pp_method = document.querySelector('input[name="vaultselect"]:checked').value; console.log(pp_method);
+        if ($('#vault-pp').is(":checked")){ vault_pp = 'Y'; } 
+        else { vault_pp = 'N' }; console.log(vault_pp);
+
+        // Normal checkout pwpp 
+        if((pp_method == 'o1' && vault_pp == 'N') || (pp_method == 'o2')) {
+            let requestBA;
+            if(vault_pp == 'Y') { requestBA = true }
+            else { requestBA = false }
+
+            // Return vault flow
+            braintree.paypalCheckout.create({
+                client: clientInstance,
+                autoSetDataUserIdToken: true  // Subsequent vault flow
+            }, function (paypalCheckoutErr, paypalCheckoutInstance) {
+
+                paypalCheckoutInstance.loadPayPalSDK({
+                    ////optional: for loading SDK quicker
+                    'client-id': client_id, // paypal account linked to BT acct
+                    currency: curr, // if not set, default to be USD
+                    intent: 'capture',
+                    //// PayLater testing (ned to be whitelisted to be able to test with checkout with vault)
+                    'components': 'buttons,messages', //optional: for payLater only
+                    'buyer-country': '{{ country }}',  // testing PL message UK, AU, FR, DE, ES or IT only
+                    'enable-funding': 'paylater',   // PL button for UK, AU, FR, DE, ES or IT only   
+                }, function () {
+                    console.log("normal checkout flow");
+
+                    var FUNDING_SOURCES = [
+                        paypal.FUNDING.PAYPAL,
+                        paypal.FUNDING.CARD,
+                        paypal.FUNDING.PAYLATER,
+                    ];
+
+                    FUNDING_SOURCES.forEach(function(fundingSource) {
+                        var button = paypal.Buttons({
+                        fundingSource: fundingSource,
+                            
+                        createOrder: function () {
+                            return paypalCheckoutInstance.createPayment({
+                                flow: 'checkout', // Required
+                                intent: 'capture', // Must match the intent passed in with loadPayPalSDK
+                                amount: amt, // Required
+                                currency: curr, // Required, must match the currency passed in with loadPayPalSDK
+                                displayName: 'TestPwPP Pte Ltd',
+
+                                // for STC graphQL
+                                //riskCorrelationId: riskCorrelationId,
+                                
+                                billingAddress: shippingAddressUS,
+                                requestBillingAgreement: requestBA,
+                                //lineItems: lineitems,
+                                //// shipping options
+                                enableShippingAddress: false,
+                                shippingAddressEditable: false,
+                                //shippingAddressOverride: shippingAddressUS
+                            });
+                        },
+
+                        // Perform some validation or calculation logic on 'data'
+                        /*onShippingChange: function (data, actions) {
+                            if ( ) {
+                                return paypalCheckoutInstance.updatePayment({
+                                    amount: 10.00,              // Required
+                                    currency: 'USD',
+                                    lineItems: lineitems,           // Required
+                                    paymentId: data.paymentId,  // Required
+                                    shippingOptions: ,     // Optional       
+                                });
+                            } else if () {
+                                return actions.reject();
+                            }
+                            return actions.resolve();
+                        },*/
+
+                        onApprove: function (data, actions) {
+                            return paypalCheckoutInstance.tokenizePayment(data, function (err, payload) {
+                                // Submit 'payload.nonce' to your server
+                                console.log(JSON.stringify(data));
+                                document.querySelector('#nonce').value = payload.nonce;
+                                document.querySelector('#devicedata').value = payload.deviceData;
+                                form.submit();
+                            });
+                        },
+
+                        onCancel: function (data) {
+                            console.log('PayPal payment cancelled', JSON.stringify(data, 0, 2));
+                        },
+
+                        onError: function (err) {
+                            console.error('PayPal error', err);
+                        }   
+                    })    
+                        if (button.isEligible()) {
+                            // Render the standalone button for that payment method
+                            button.render('#paypal-button')
+                        } 
+                    })
+                    //}).render('#paypal-button').then(function () {
+                        // The PayPal button will be rendered in an html element with the ID
+                        // 'paypal-button'. This function will be called when the PayPal button
+                        // is set up and ready to be used
+                   //});
+                });
+            });
+        }
+
+        // Vault pwpp flow + risk data for chargePayPalAccount gql
+        if((pp_method == 'o1' && vault_pp == 'Y')) {
+                
+            // Create a PayPal Checkout component.
+            braintree.paypalCheckout.create({
+                client: clientInstance,
+            }, function (paypalCheckoutErr, paypalCheckoutInstance) {
+    
+                paypalCheckoutInstance.loadPayPalSDK({
+                    ////optional: for loading SDK quicker
+                    'client-id': client_id, // paypal account linked to BT acct
+                    vault: true 
+                }, function () {  
+                    paypal.Buttons({
+                        fundingSource: paypal.FUNDING.PAYPAL,
+                        //fundingSource: fundingSource,
+
+                        createBillingAgreement: function () {
+                            return paypalCheckoutInstance.createPayment({
+                                flow: 'vault', // Required
+
+                                // The following are optional params
+                                billingAgreementDescription: 'Your agreement description',
+                                enableShippingAddress: false,
+                                shippingAddressEditable: false,       
+                            });
+                        },
+
+                        onApprove: function (data, actions) {
+                            return paypalCheckoutInstance.tokenizePayment(data, function (err, payload) {
+                                console.log("DEVICE DATA: "+document.querySelector('#devicedata').value);
+                                // Submit 'payload.nonce' to your server
+                                document.querySelector('#nonce').value = payload.nonce;
+                                document.querySelector('#devicedata').value = payload.deviceData;
+                                form.submit();
+                            });
+                        },
+    
+                        onCancel: function (data) {
+                            console.log('PayPal payment cancelled', JSON.stringify(data, 0, 2));
+                        },
+    
+                        onError: function (err) {
+                            console.error('PayPal error', err);
+                        }  
+                    }).render('#paypal-button').then(function () {
+                        // The PayPal button will be rendered in an html element with the ID
+                        // 'paypal-button'. This function will be called when the PayPal button
+                        // is set up and ready to be used
+                    });
+                });
+            });
+        }
+
+        // Normal Checkout Flow without Vault + all risk data with chargePayment gql
+        if((pp_method == 'o3' && vault_pp == 'N')) {
+                
+            // Create a PayPal Checkout component.
+            braintree.paypalCheckout.create({
+                client: clientInstance,
+            }, function (paypalCheckoutErr, paypalCheckoutInstance) {       
+                paypalCheckoutInstance.loadPayPalSDK({
+                    ////optional: for loading SDK quicker
+                    'client-id': client_id, // paypal account linked to BT acct
+                    currency: curr, // if not set, default to be USD
+                    intent: 'capture',
+                    'buyer-country': '{{ country }}'
+
+                }, function () {
+                           
+                    var FUNDING_SOURCES = [
+                        paypal.FUNDING.PAYPAL,
+                        paypal.FUNDING.CARD,
+                        //paypal.FUNDING.PAYLATER,
+                    ];
+
+                    FUNDING_SOURCES.forEach(function(fundingSource) {
+                        var button = paypal.Buttons({
+                            fundingSource: fundingSource,
+    
+                            createOrder: function () {
+                                return paypalCheckoutInstance.createPayment({
+                                    flow: 'checkout', // Required
+                                    amount: amt, // Required 
+                                    currency: curr, // Required, must match the currency passed in with loadPayPalSDK
+                                    intent: 'capture', // Must match the intent passed in with loadPayPalSDK
+                                    riskCorrelationId: riskCorrelationId, // STC purposes
+                                    displayName: 'TestMX Web Pte Ltd',
+
+                                    enableShippingAddress: false,
+                                    shippingAddressEditable: false
+                                });
+                            },
+    
+                            onApprove: function (data, actions) {
+                                return paypalCheckoutInstance.tokenizePayment(data, function (err, payload) {
+                                    console.log(payload.deviceData);
+                                    // Submit 'payload.nonce' to your server
+                                    document.querySelector('#nonce').value = payload.nonce;
+                                    document.querySelector('#devicedata').value = payload.deviceData;
+                                    form.submit();
+                                });
+                            },
+        
+                            onCancel: function (data) {
+                                console.log('PayPal payment cancelled', JSON.stringify(data, 0, 2));
+                            },
+        
+                            onError: function (err) {
+                                console.error('PayPal error', err);
+                            }  
+                            
+                        })  
+                                                    
+                        if (button.isEligible()) {
+                                // Render the standalone button for that payment method
+                                button.render('#paypal-button')
+                            } 
+                        //}).render('#paypal-button').then(function () {
+                            // The PayPal button will be rendered in an html element with the ID
+                            // 'paypal-button'. This function will be called when the PayPal button
+                            // is set up and ready to be used
+                        //});
+                    });
+                });
+            })
+        }
+    })
+})
+</script>
+
+<script>
+    var vaulted_pp = "{{ pp_vaulted }}"
+    var x = document.getElementById("vault-pp-select");
+    x.style.display = "block"
+    console.log("vaultalr: " + vaulted_pp)
+    let vault;
+
+    // hide pp vault checkbox if customer had already vaulted their pp account before
+    if(vaulted_pp === 'Y') {
+        console.log('vaultpp is done, hide checkbox')
+        if (x.style.display === "block") {
+            x.style.display = "none";
+        } 
+    } else {
+        console.log('vaultpp not done, show checkbox')
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } 
+    }
+
+    // Constant value to pass into paypal SDK button
+    const style = {
+        layout:  'vertical',
+        color:   'gold',
+        shape:   'rect',
+        label:   'paypal'
+    }
+
+    const lineitems = [{
+        unitAmount: document.getElementById('amount').value,
+        quantity: 1,
+        description: 'Game Topup',   // Compliance: Purpose
+        name: 'App Name - Shoduku',  // Compliance: Game Name
+        kind: 'debit'
+    }]
+
+    const shippingAddressUS = {
+        recipientName: 'Scruff McGruff',
+        line1: '1234 Main St.',
+        line2: 'Unit 123',
+        city: 'Chicago',
+        countryCode: 'US',
+        postalCode: '60652',
+        state: 'IL',
+        phone: '123.456.7890'
+    }
+
+    const shippingAddressSG = {
+        recipientName: 'Scruff McGruff',
+        line1: '1234 Ang Mo Kio St.',
+        line2: 'Unit 123',
+        city: 'Singapore',
+        countryCode: 'SG',
+        postalCode: '606521'
+    }
+
+                       
+</script>
+
+<style>
+    .move-left {
+        width: auto;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}

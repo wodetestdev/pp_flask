@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="wrapper">
+  <div class="checkout container">
+
+    <header>
+        <h2><br>Please select a gateway below</h2>
+    </header>
+    <br>
+    
+    <div class="d-flex flex-column">
+        <div class="container">
+            <h5> Braintree Checkouts: </h5>
+            <div class="btn-group-vertical" role="group" aria-label="Braintree">
+                <a href="/bt/dropin" class="btn btn-dark btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Checkout with BrainTree DropIn</a>
+                <a href="/btgql/pwpp" class="btn btn-dark btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Checkout with BrainTree PwPP</a>
+                <a href="/bt/hostedfield" class="btn btn-dark btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Checkout with BrainTree Hosted Field</a>
+                <a href="/bt/search_manage" class="btn btn-dark btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Search & Manage Braintree Info</a>
+            </div>
+        </div>
+        <br>
+        
+        <div class="container">
+            <h5> PayPal Checkouts: </h5>
+            <div class="btn-group-vertical" role="group" aria-label="PayPal">
+                <a href="/pp/spb" class="btn btn-warning btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Checkout with PayPal Smart Button</a>
+                <a href="/pp/order/api" class="btn btn-warning btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Checkout with PayPal Order v2</a>
+                <a href="/pp/search_manage" class="btn btn-warning btn-lg btn-block" aria-pressed="true" style="border:1px solid white;">Search & Manage PayPal Info</a>
+            </div>
+        </div>
+
+        <br>
+       
+        <div class="p-2">
+            <a href="/client/hosted/new" class="btn btn-success btn-lg btn-block active" role="button" aria-pressed="true">-------- Try Hosted Field via BTSDK -------</a>
+        </div>
+
+        <div class="p-2">
+            <a href="/checkouts/gql/hosted/new" class="btn btn-success btn-lg btn-block active" role="button" aria-pressed="true">------ Try Hosted Fields via GraphQL ------</a>
+        </div>
+    
+        <div class="p-2">
+          <a href="/checkouts/bt/api" class="btn btn-success btn-lg btn-block active" role="button" aria-pressed="true">------ Try Braintree API only ------</a>
+        </div>
+        
+        <div class="p-2">
+          <a href="/checkouts/gql/googlepay" class="btn btn-info btn-lg btn-block active" role="button" aria-pressed="true">----------- Try Googlepay Checkout via GraphQL ---------</a>
+        </div>
+
+        <div class="p-2">
+          <a href="/bt/go_capture_auth" class="btn btn-secondary btn-lg btn-block active" role="button" aria-pressed="true">------------ Try Void / Settle Authorized Txn -------------</a>
+        </div>
+      </div>
+
+  </div>
+</div>
+
+{% endblock %}

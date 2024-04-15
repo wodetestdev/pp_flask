@@ -1,0 +1,545 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <!--<meta http-equiv="Content-Security-Policy" content="
+  script-src 'self' http://* http://localhost:4567 'unsafe-inline';">-->
+  
+  <title>PP - Vaulting Order v2</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/cc.css') }}">
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-alpha1/dist/css/bootstrap.min.css' rel='stylesheet'>
+  <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
+  
+  <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+    
+  <!-- For BNPL Messaging -->
+  <!--<script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&components=messages&currency={{ curr }}&buyer-country={{ country }}"></script>-->
+
+  <style>
+    .container {
+        max-width: 960px;
+    }
+    
+    .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+    }
+
+    @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+    }
+  </style>
+</head>
+
+<body>
+    <div class="checkout container">     
+        <header>
+            <h2><br>Let's test a transaction</h2>
+            <p>Save & Tokenize the Respective Payment Methods below </p>
+        </header>  
+        <br/>  
+
+        <div class="col-md-7 col-lg-8">
+            <div id="parameters">
+                <label for="amount">
+                    <span class="input-label">Currency</span>    
+                    <input id="currency" name="currency" type="text" value="{{ curr }}">
+                </label>
+                <label for="amount">
+                    <span class="input-label">Amount</span>
+                    <div class="input-wrapper amount-wrapper">
+                        <input id="amount" name="amount" type="tel" min="1" value="15.00">
+                    </div>
+                </label>
+            </div>
+            
+            <!-- BNPL Messaging -->
+            <div 
+                data-pp-message
+                data-pp-style-layout="flex"
+                data-pp-style-color="black"
+                data-pp-style-ratio="20x1"
+                data-pp-buyerCountry="{{cnty}}"
+            >
+            </div>
+
+            <br/>
+            <h4 class="mb-3">Billing address</h4>
+            <form class="needs-validation" novalidate>
+                <div class="row g-3">
+
+                    <div class="col-12">
+                        <label for="address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="address" value="2211 N First Street" required>
+                        <div class="invalid-feedback">
+                            Please enter your shipping address.
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="address2" class="form-label">Address 2 <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="address2" value="Building 17">
+                    </div>
+
+                    <div class="col-md-5">
+                        <label for="country" class="form-label">Country</label>
+                        <select class="form-select" id="country" required>
+                            <option value="US">United States</option>
+                            <option value="SG">Singapore</option>
+                            <option value="HK">Hong Kong</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select a valid country.
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="state" class="form-label">State</label>
+                        <select class="form-select" id="state" required>
+                            <option value="CA">CA</option>
+                            <option value="AL">AL</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please provide a valid state.
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="zip" class="form-label">Zip</label>
+                        <input type="text" class="form-control" id="zip" value="95131" required>
+                        <div class="invalid-feedback">
+                            Zip code required.
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="same-address">
+                    <label class="form-check-label" for="same-address">Shipping address is the same as my billing address</label>
+                </div>
+                
+                <hr class="my-4">
+                <h4 class="mb-3">Payment</h4>
+
+                <div class="my-3">
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="rCC"  value="card"> <!--data-toggle="collapse" data-target="#cc" required onclick="showcc()">-->
+                        <label class="form-check-label" for="credit">Credit card</label>
+                    </div>
+                        
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="rPP" value="paypal">
+                        <label class="form-check-label" for="paypal">PayPal</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="rGB" value="grab">
+                        <label class="form-check-label" for="grab">GrabPay</label>
+                    </div>
+                </div><br/>
+
+                <div class="row gy-3 panel-collapse collapse in" id="cc">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Name on card</label>
+                        <input type="text" class="form-control" id="name" value="John Wicky" required>
+                        <!--<small class="text-muted">Full name as displayed on card</small>-->
+                        <div class="invalid-feedback">
+                            Name on card is required
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="number" class="form-label">Credit card number</label>
+                        <input type="text" class="form-control" id="number" value="4005519200000004" required>
+                        <div class="invalid-feedback">
+                            Credit card number is required
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="expiry" class="form-label">Expiration</label>
+                        <input type="text" class="form-control" id="expiry" value="2025-01" required>
+                        <div class="invalid-feedback">
+                            Expiration date required
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="cvv" class="form-label">CVV</label>
+                        <input type="text" class="form-control" id="cvv" value="123" required>
+                        <div class="invalid-feedback">
+                            Security code required
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <br/>
+                        <button class="w-100 btn btn-primary btn-lg button" id="cc_button" name="cc_button" type="submit" onclick="checkout_cc()">Continue to checkout</button>
+                    </div>
+
+                    <div class="col-md-8 form-check">
+                        <input type="checkbox" class="form-check-input" id="savecc" name="savecc" value="no" onclick="save_cc()">
+                        <label class="form-check-label" for="savecc">Save credit card for faster checkout</label>
+                    </div>
+                </div>
+
+                <div class="row gy-3 panel-collapse collapse in" id="pp">
+                    <div class="col-md-8 form-check">
+                        <input type="checkbox" class="form-check-input" id="savepp" name="savepp" value="no" onclick="save_pp()">
+                        <label class="form-check-label" for="savepp">Save PayPal for faster checkout</label>
+                    </div>
+                    <div class="col-md-8">
+                        <button type="button" id="pp-button" class="btn btn-warning btn-lg btn-block collapsed" responsive-width onclick="checkout_pp()">
+                            <i id="paypal" class="pp-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row gy-3 panel-collapse collapse in" id="grab">
+                    <div class="col-md-8">
+                        <button type="button" id="grab-button" class="btn btn-outline-secondary btn-lg btn-block collapsed" responsive-width onclick="checkout_pp()">
+                            <i id="grab" class="grab-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="my-4" >
+                
+            </form>
+        
+            <!--<h5>Success Transaction</h5>
+            <table cellpadding="0" cellspacing="0">
+                <tbody id="txn">
+                </tbody>
+            </table>
+            <br/><br/>
+            <h5>API Response: </h5>
+            <div id="result"></div>   -->  
+            <br/>
+            <section>
+                <div id="saved-payment">
+                    <h5 style="color: rgb(137, 167, 184);"><strong> Pay by Saved Payment Methods </strong></h5>
+                    <br/>
+                    
+                </div>
+                <!-- BNPL Messaging -->
+                <div class="pp-message"></div>
+                <br/><br/>
+                <button class="button" onclick="location.href='http://127.0.0.1:4567'" type="button">
+                    <span style="background-color: grey;">Back to Home</span></button>
+            </section>
+        </div>
+        
+    </div>
+
+    <!-- UI Javascript -->
+    <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-alpha1/dist/js/bootstrap.bundle.min.js'></script>
+
+    <script type='text/javascript'>
+        /////// Load and display the vaulted payment methods if exists
+        var pmethods = JSON.parse('{{ methods | tojson }}');
+        var text = ""
+        //console.log(pmethods);
+
+        if(pmethods != 400) {
+        $.each(pmethods.payment_tokens, function(k, v) {
+            if(v.payment_source.card != undefined) {
+                //console.log(v.id + ": " + "brand- " + v.payment_source.card.brand + " " + v.payment_source.card.last_digits);
+                var myDiv = document.getElementById("saved-payment");
+                var source = 'card';
+
+                // creating button element
+                var button = document.createElement('BUTTON');
+                button.id = 'saved_cc';
+                button.className = "w-100 btn btn-dark btn-lg button";   
+                
+                // creating text to be displayed on button
+                if(v.payment_source.card.brand == 'VISA') {
+                    button.innerHTML = '<i id="card" class="visa-icon"></i>';
+                } else {
+                    button.innerHTML = '<i id="card" class="mc-icon"></i>';
+                }
+                var text = document.createTextNode(" ... " + v.payment_source.card.last_digits);
+                button.appendChild(text);
+                button.style.marginBottom = '15px';
+
+                // appending button to div
+                myDiv.appendChild(button);
+                document.getElementById("saved_cc").onclick = function() { pay_vault(v.id, source) };
+            }
+            if(v.payment_source.paypal != undefined) {
+                //console.log(v.id + ": " + "email- " + v.payment_source.paypal.email_address);
+                var myDiv = document.getElementById("saved-payment");
+                var source = 'paypal';
+
+                // creating button element
+                var button = document.createElement('BUTTON');
+                button.className = "w-100 btn btn-warning btn-lg button";   
+                button.id = 'saved_pp';
+
+                button.innerHTML = '<i id="pp" class="pp-icon"></i>';
+                if(v.payment_source.paypal.email_address != undefined) {
+                    text = document.createTextNode(v.payment_source.paypal.email_address);
+                } else {
+                    text = document.createTextNode(v.payment_source.paypal.name.full_name);
+                }
+                button.appendChild(text);
+                button.style.marginBottom = '15px';
+                
+                // appending button to div
+                myDiv.appendChild(button);
+                document.getElementById("saved_pp").onclick = function() { pay_vault(v.id, source) };
+            } else {
+                console.log("No saved payment methods found");
+            }
+        });
+        }
+
+        /////// Form validations
+        (function () {
+            'use strict'
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.querySelectorAll('.needs-validation')
+
+            // Loop over them and prevent submission
+            Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        /////// Individual payment method button display controls
+        $('#cc, #pp, #grab').collapse('hide'); 
+        $('input[name="paymentMethod"]').change( function() {
+            if ($('#rCC').is(":checked")){
+                $('#cc').collapse('show');
+            } else {
+                $('#pp, #grab').collapse('hide');
+            } 
+            if ($('#rPP').is(":checked")){
+                $('#pp').collapse('show');
+            } else {
+                $('#cc, #grab').collapse('hide');
+            } 
+            if ($('#rGB').is(":checked")){
+                $('#grab').collapse('show');
+            } else {
+                $('#pp, #cc').collapse('hide');
+            } 
+        });
+
+        /////// Checkbox to vault credit card
+        function save_cc() {
+            // Get the checkbox
+            var checkBox = document.getElementById("savecc");
+            // If the checkbox is checked, display the output text
+            if (checkBox.checked == true){
+                document.getElementById("savecc").value="yes";
+            } else {
+                document.getElementById("savecc").value="no";
+            }
+            console.log(document.getElementById('savecc').value);   
+        }
+    
+        /////// Checkbox to vault paypal wallet
+        function save_pp() {
+            // Get the checkbox
+            var checkBox = document.getElementById("savepp");
+            // If the checkbox is checked, display the output text
+            if (checkBox.checked == true){
+                document.getElementById("savepp").value="yes";
+            } else {
+                document.getElementById("savepp").value="no";
+            }
+            console.log(document.getElementById('savepp').value);   
+        }
+    </script>
+  
+    <!-- PayPal Vault Logic -->
+    <script>
+        //var methods = '{{ methods }}'
+        var submitPP = document.querySelector('#pp-button');
+        var form = document.querySelector('#payment-form');
+  
+        // BNPL Messaging
+        /*paypal.Messages({
+            amount: document.getElementById('amount').value,
+            pageType: 'product-detail',
+            buyerCountry: '{{ cnty }}',
+            style: {
+                layout: 'text',
+                color: 'black',
+                logo: {
+                  type: 'primary',
+                  position: 'top'
+                }
+            },})
+        .render('.pp-message');*/
+
+        /////// Credit Card Tokenization & Pay or Just one-time checkout with credit card 
+        async function checkout_cc() {
+            const ccorder = await fetch('/cc/order/api/create', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "number": document.getElementById('number').value,
+                    "expiry": document.getElementById('expiry').value,
+                    "name": document.getElementById('name').value,
+                    "cvv": document.getElementById('cvv').value,
+                    "billing_address": {
+                        "address_line_1": document.getElementById('address').value,
+                        "address_line_2": document.getElementById('address2').value,
+                        "admin_area_2": 'San Jose',
+                        "admin_area_1": document.getElementById('state').value,
+                        "postal_code": document.getElementById('zip').value,
+                        "country_code": document.getElementById('country').value
+                    },
+                    "currency": document.getElementById('currency').value,
+                    "amount": document.getElementById('amount').value,
+                    "vault": document.getElementById('savecc').value,
+                    "source": document.querySelector('input[name="paymentMethod"]:checked').value
+                })
+            })
+            .then(response => response.json())
+            .catch((error) => { console.log(error) });
+
+            alert('payment successful');
+            /*if(transaction.status = "COMPLETED") {
+                window.location.href = `/pp/find/payment/${transaction.id}`;
+            } else {
+                alert('Error: ' + error);
+            }*/
+        }
+
+        /////// PayPal Tokenization and Pay
+        async function checkout_pp() {
+            const createorder = await fetch('/pp/order/api/create', { 
+                method: 'POST',
+                body: JSON.stringify({
+                    "currency": document.getElementById('currency').value,
+                    "amount": document.getElementById('amount').value,
+                    "vault": document.getElementById('savepp').value,
+                    "source": document.querySelector('input[name="paymentMethod"]:checked').value
+                })
+            })
+            .then(response => response.json())
+            .catch((error) => { console.log(error) });
+            orderid = createorder.id;
+            approveURL = createorder.links[1].href;
+            console.log('paypal orderid: ' + orderid);
+            // redirect to approval link
+            const approval = await (window.location.href = approveURL);
+        }
+
+        // Detect redirect after PayPal approval
+        $(window).load(function() {
+            //alert("window load occurred!");
+            const pathname = window.location.search;
+            let params = new URLSearchParams(pathname);
+            console.log("returnURL: " + params);
+            if(params.get('PayerID') !== null || params.get('apm') == "approved") {
+                approved_oi = params.get('token')
+                console.log("Order Approved: " + approved_oi)
+                const result = capture_order(approved_oi)
+            } else {
+                console.log("Some error occurred")
+            }
+        });
+
+        // Capture order
+        async function capture_order(order_id) {
+            await fetch('/pp/spb/order/' + order_id + '/capture', {
+                method: 'post'
+            })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Something went wrong');
+            })
+            .then((result) => {
+                transaction = result.purchase_units[0].payments.captures[0]
+                console.log(transaction);
+                if(transaction.status = "COMPLETED") {
+                    window.location.href = `/pp/find/payment/${transaction.id}`;
+                    //console.log('Transaction '+ transaction.status + ': ' + transaction.id + '\n\nSee console for all available details');
+                    //let response = `<a>${JSON.stringify(result)}</a>`;
+                    //document.getElementById("result").innerHTML = response
+                } else {
+                    console.log('Transaction payment has not completed yet')
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            });
+            
+        }
+
+        /////// Pay via vaulted payment methods
+        async function pay_vault(token, source) {
+            console.log(token + source);
+            await fetch('/pp/order/api/create', { 
+                method: 'POST',
+                body: JSON.stringify({
+                    'amount':  document.getElementById('amount').value,
+                    'currency': document.getElementById('currency').value,
+                    'token': token,
+                    'source': source
+                })
+            })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Something went wrong');
+            })
+            .then((result) => {
+                transaction = result.purchase_units[0].payments.captures[0]
+                console.log(transaction);
+                if(transaction.status = "COMPLETED") {
+                    window.location.href = `/pp/find/payment/${transaction.id}`;
+                    //console.log('Transaction '+ transaction.status + ': ' + transaction.id + '\n\nSee console for all available details');
+                    //let response = `<a>${JSON.stringify(result)}</a>`;
+                    //document.getElementById("result").innerHTML = response
+                } else {
+                    console.log('Transaction payment has not completed yet')
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+        }
+    </script>
+    
+    <!-- Fraunet for PP -->
+    <script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">
+        {
+             "f":"change_this_to_32char_guid",
+            "s":"unique_flowid_per_web_page"        
+        }
+    </script>
+
+    <span id='lippButton'></span>
+    <script src='https://www.paypalobjects.com/js/external/api.js'></script>
+    
+    <script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
+    <noscript>
+        <img src="https://c.paypal.com/v1/r/d/b/ns?f=change_this_to_32char_guid&s=flowid_provided_to_you&js=0&r=1" />
+    </noscript>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="wrapper">
+  <div class="checkout container">
+
+    <header>
+      <h2><br>Let's test a transaction</h2>
+      <p>Make a test payment with Braintree Dropin using PayPal/Card/Venmo/GooglePay</p>
+    </header>
+
+    <form id="payment-form" method="post" action="/server/sdk/checkout">
+      <section>
+        <label for="amount">
+          <span class="input-label">Currency</span>    
+            <input id="currency" name="currency" type="text" value="{{ currency }}">
+        </label>
+        <label for="amount">
+          <span class="input-label">Amount</span>
+          <div class="input-wrapper amount-wrapper">
+            <input id="amount" name="amount" type="tel" min="1" placeholder="Amount" value="10">
+          </div>
+        </label>
+
+        <div class="bt-drop-in-wrapper">
+          <div id="bt-dropin"></div>
+        </div>
+
+      </section>
+      
+      <input type="hidden" id="nonce" name="payment_method_nonce" />
+      <input type="hidden" id="3ds_nonce" name="3ds_method_nonce" />
+      <input type="hidden" id="devicedata" name="device_data"/>
+      <input type="hidden" id="vaulted" name="vaulted" />
+    
+      <button class="button" type="submit" id="submit-button"><span>Test Transaction</span></button>
+      <button class="button" onclick="location.href='/'" type="button">
+        <span style="background-color: grey;">Back to Home</span></button>
+    </form>
+
+  </div>
+</div>
+
+<script src="https://js.braintreegateway.com/web/dropin/1.39.1/js/dropin.min.js"></script>
+<script>
+  var form = document.querySelector('#payment-form');
+  var client_token = '{{ client_token }}';
+
+  braintree.dropin.create({
+    authorization: client_token,  // client token to auth
+    container: '#bt-dropin',  // refer to dropin UI div
+    vaultManager: true,      // allow user to delete vault payment
+
+    //// Features & functionalities
+    threeDSecure: true,      // 3DS
+    dataCollector: true,     // data collection
+
+    //// UI settings
+    paymentOptionPriority: ['card', 'paypal', 'paypalCredit', 'venmo', 'googlePay', 'applePay'],
+    hiddenVaultPaymentMethodTypes: [],    
+
+    //// Card Settings
+    card: {
+      overrides: {
+        fields: {
+          number: {
+            placeholder: 'Card Number',
+            maskInput: {
+              showLastFour: true
+            },
+            formatInput: true  // turn off automatic formatting
+          },
+          postalCode: {
+            minlength: 4  // set mini length of the postal code field
+          },
+          cvv: {
+            maskInput: true
+          }
+        },
+        styles: {
+          input: {
+            'font-size': '13px'
+          },
+          ':focus': {
+            color: 'blue'
+          }
+        }
+      }
+    },
+    // card: false,   // option to omit credit card by default
+
+    //// Paypal wallet Settings
+    paypal: {                // enable paypal
+      flow: 'vault',
+      // flow: 'checkout',    // when no vault
+      buttonStyle: {
+        color: 'gold',
+        shape: 'rect',
+        size: 'medium'
+      },
+      // FOR prior STC flow not using txn.sale
+      //clientMetadataId: clientMetadataId
+    },
+    // FOR prior STC flow not using txn.sale
+    //dataCollector: {
+      //clientMetadataId: clientMetadataId
+    //},
+
+    //// Paypal credit Settings
+    paypalCredit: {
+      flow: 'checkout'
+    },
+
+    //// Venmo wallet Settings, only available for US accounts
+    venmo: {
+      allowNewBrowserTab: false
+    },
+
+    //// GooglePay settings
+    googlePay: {
+      googlePayVersion: 2,
+      //merchantId: 'merchant-id-from-google', // can be omitted in sandbox
+      transactionInfo: {
+        totalPriceStatus: 'FINAL',
+        totalPrice: document.getElementById("amount").value,
+        currencyCode: 'USD'
+      },
+      allowedPaymentMethods: [{
+        type: 'CARD',
+        parameters: {
+          // We recommend collecting and passing billing address information with all Google Pay transactions as a best practice.
+          billingAddressRequired: true,
+          billingAddressParameters: {
+            format: 'FULL'
+          }
+        }
+      }]
+    },
+
+    //// ApplePay settings
+    applePay: {
+      displayName: 'My Store',
+      paymentRequest: {
+        total: {
+          label: 'My Store',
+          amount: document.getElementById("amount").value
+        },
+        // We recommend collecting billing address information, at minimum
+        // billing postal code, and passing that billing postal code with all
+        // Apple Pay transactions as a best practice.
+        requiredBillingContactFields: ["postalAddress"]
+      }
+    }
+
+  }, function (createErr, instance) {
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      instance.requestPaymentMethod({
+        threeDSecure: threeDSecureParameters
+      }, function (err, payload) {
+        console.log(payload);
+        if (err) {
+          console.log('Error', err);
+          return;
+        }
+        
+        if(payload.type == 'CreditCard') {
+          if (!payload.liabilityShifted) {
+            alert('Liability did not shift, please try again');
+          } else {
+            // Add the nonce to the form and submit
+            document.querySelector('#nonce').value = payload.nonce;
+            document.querySelector('#devicedata').value = payload.deviceData;
+            document.querySelector('#vaulted').value = payload.vaulted;
+            form.submit();
+          }
+        } else {
+          document.querySelector('#nonce').value = payload.nonce;
+          document.querySelector('#devicedata').value = payload.deviceData;
+          document.querySelector('#vaulted').value = payload.vaulted;
+          form.submit();
+        }
+      }) 
+    });
+  });
+
+  // 3DS Step 2: Ideal parameters for drop-in 3ds
+  var threeDSecureParameters = {
+    amount: document.getElementById("amount").value, // mandatory for dropin
+    email: 'testmulti@test.com',
+    billingAddress: {  // mandatory if billing address is set in account
+      givenName: 'Test', // ASCII-printable characters required, else will throw a validation error
+      surname: 'Multi', // ASCII-printable characters required, else will throw a validation error
+      phoneNumber: '8101234567',
+      streetAddress: '555 Smith St.',
+      extendedAddress: '#5',
+      locality: 'Oakland',
+      region: 'CA',
+      postalCode: '12345',
+      countryCodeAlpha2: 'US'
+    },
+    collectDeviceData: true
+   /*additionalInformation: {
+      workPhoneNumber: '8101234567',
+      shippingGivenName: 'Test',
+      shippingSurname: 'Dropin',
+      shippingPhone: '8101234567',
+      shippingAddress: {
+        streetAddress: '555 Smith St.',
+        extendedAddress: '#5',
+        locality: 'Oakland',
+        region: 'CA',
+        postalCode: '12345',
+        countryCodeAlpha2: 'US'
+      }
+    },*/
+  };
+
+</script>
+
+{% endblock %}

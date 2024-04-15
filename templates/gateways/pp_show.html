@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="wrapper">
+  <div class="response container">
+    <div class="content">
+      <div class="icon">
+        <img src="/static/images/{{ result['icon'] }}.svg" alt="">
+      </div>
+
+      <h1>{{ result['header'] }}</h1>
+      <section>
+        <p>{{ result['message'] }}</p>
+        <h1>API Response</h1>
+        
+      </section>
+      <p>{{ details }}</p>
+      <section id="button_section">
+        <a class="button primary back" href="/">
+          <span>Test Another Transaction</span>
+        </a>
+      </section>
+    </div>
+  </div>
+</div>
+
+<aside class="drawer dark">
+  <header>
+    <div class="content compact">
+      <a href="https://developers.paypal.com" class="braintree" target="_blank">PayPal</a>
+      <h3>API Response</h3>
+    </div>
+  </header>
+  <article class="content compact">
+    <section>
+      <h5>Transaction</h5>
+        <table cellpadding="0" cellspacing="0">
+          <tbody id="orderDetails">
+            <tr>
+                <td>type</td>
+                <td>{{id_type}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </article>
+</aside>
+
+<script>
+    const orderDetailsDiv = document.getElementById("orderDetails");
+    const buttonSection = document.getElementById("button_section");
+    var details = JSON.parse('{{ details | tojson }}');
+
+    // Loop through transaction json object key-value pairs and create table rows
+    for (const [key, value] of Object.entries(details)) {
+        const row = document.createElement("tr");
+        const keyCell = document.createElement("td");
+        const valueCell = document.createElement("td");
+
+        keyCell.textContent = key;
+        valueCell.textContent = value;
+
+        if(key == 'links') {
+            var obj = value;
+            for (var p in obj) {
+                if( obj.hasOwnProperty(p) ) {
+                    if (obj[p].rel == 'refund') {
+                        console.log(details.id);
+                        valueCell.textContent = obj[p].href;
+                        row.appendChild(valueCell);
+                        orderDetailsDiv.appendChild(row);
+                        var b1 = document.createElement("a");
+                        b1.setAttribute("type", "button");
+                        b1.setAttribute("class", "btn btn-primary btn-lg");
+                        b1.innerHTML = "Refund";
+                        b1.onclick = function(){
+                            fetch('/pp/spb/refund', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    txn_id: details.id, 
+                                    invoice_id: 'inv1235',
+                                    note_to_payer: "DefectiveProduct",
+                                    type: 'refund'
+                                })
+                            });
+                        };
+                        buttonSection.appendChild(b1);
+                    }
+                    if (obj[p].rel == 'delete') {
+                        valueCell.textContent = obj[p].href;
+                        row.appendChild(valueCell);
+                        orderDetailsDiv.appendChild(row);
+                        var b2 = document.createElement("a");
+                        b2.setAttribute("type", "button");
+                        b2.setAttribute("class", "btn btn-warning btn-lg");
+                        b2.innerHTML = "Delete";
+                        b2.onclick = function(){
+                            fetch('/pp/spb/delete', {
+                                method: 'DELETE',
+                                body: JSON.stringify({
+                                    txn_id: details.id, 
+                                    type: 'delete'
+                                })
+                            });
+                        };
+                        buttonSection.appendChild(b2);
+                    }
+                } 
+            }
+        } 
+
+        if(key == 'payment_source') {
+            if(value.card) {
+                valueCell.textContent = 'card: ' + value.card.brand + ' - ' 
+                + value.card.last_digits + ' - ' + value.card.expiry;
+                row.appendChild(valueCell);
+                orderDetailsDiv.appendChild(row);
+            } else if (value.paypal) {
+                console.log(value.paypal.links[1]);
+            }
+
+        }
+
+        row.appendChild(keyCell);
+        row.appendChild(valueCell);
+        orderDetailsDiv.appendChild(row);
+    }
+
+</script>
+{% endblock %}

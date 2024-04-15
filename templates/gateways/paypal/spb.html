@@ -1,0 +1,456 @@
+{% extends 'layout.html' %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="https://www.paypalobjects.com/webstatic/en_US/developer/docs/css/cardfields.css"/>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/pp.css') }}">
+
+ <!-- Set up a container element for the button -->
+ <div class="wrapper">
+    <div class="checkout container">
+         
+        <!-- Header Message -->
+        <header>
+            <h2><br>Let's test a transaction</h2>
+            <p>Make a test payment with PayPal Smart Button & Hosted Field</p>
+        </header>
+    
+        <!-- Payment container -->
+        <div class="col-8 mx-auto" >
+            <div id="pay-invoice" class="card">
+                <div class="card-body">
+        
+                    <!-- Amount Section -->
+                    <div class="card-title">
+                        <h2 class="text-center">Pay an Amount</h2>
+                    </div>
+                    <hr>
+                    <section>
+                        <label for="amount">
+                            <span class="input-label">Currency</span>    
+                            <input id="currency" name="currency"  value="{{ curr }}">
+                        </label>
+                  
+                        <label for="amount">
+                            <span class="input-label">Amount</span>
+                            <div class="input-wrapper amount-wrapper">
+                                <input id="amount" name="amount" placeholder="Amount" value="">
+                            </div>
+                        </label>
+                    </section>
+        
+                    <!-- BNPL Messaging -->
+                    <div 
+                        data-pp-message
+                        data-pp-style-layout="flex"
+                        data-pp-style-color="black"
+                        data-pp-style-ratio="20x1"
+                        data-pp-buyerCountry="{{cnty}}"
+                    ></div>
+                    
+                    <!-- PayPal Smart Button -->
+                    <div class="paypal_container">
+                        <div class="form-check" id="vault-pp-select"> 
+                            <input class="form-check-input move-left" type="checkbox" value="" id="vault-pp" name="vault">
+                            <label class="form-check-label" for="vault">Save PayPal for new PayPal Account</label>
+                        </div>
+                        <div id="paypal-button-container" class="paypal-button-container"></div>
+                    </div>
+                    <hr>
+            
+                    <div class="card_container">
+                        <form id="card-form">
+                            <label for="card-number">Card Number</label>
+                            <div id="card-number" class="card_field"></div>
+                            <div style="display: flex; flex-direction: row;"></div>
+                            <label for="expiration-date">Expiration Date</label>
+                            <div id="expiration-date" class="card_field"></div>
+                            <div style="margin-left: 10px;"></div>
+                            <label for="cvv">CVV</label>
+                            <div id="cvv" class="card_field"></div>
+                            <!--<label for="card-number" class="control-label">Card Number</label>
+                            <div id="card-number" name="card-number" class="card_field"></div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="expiration-date" class="control-label">Expiry Date</label>
+                                        <div id="expiration-date" name="expiration-date" class="card_field" data-val="true" data-val-required="Please enter the card expiration" data-val-cc-exp="Please enter a valid month and year" autocomplete="on"></div>
+                                        <span class="help-block" data-valmsg-for="cc-exp" data-valmsg-replace="true"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="cvv" class="control-label">CVV</label>
+                                        <div id="cvv" name="cvv" class="card_field" data-val="true" data-val-required="Please enter the security code" data-val-cc-cvc="Please enter a valid security code" autocomplete="on"></div>
+                                        <div class="input-group-addon pull-right">
+                                            <span class="fa fa-question-circle fa-lg" data-toggle="popover" data-container="body" data-html="true" data-title="Security Code" 
+                                            data-content="<div class='text-center one-card'>The 3 digit code on back of the card..<div class='visa-mc-cvc-preview'></div></div>"
+                                            data-trigger="hover"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>-->
+                            
+                            <!-- Other info for 3DS -->
+                            <div class="form-group">
+                                <!-- Cardholder Name -->
+                                <label for="card-holder-name">Name on Card</label>
+                                <input
+                                    type="text"
+                                    id="card-holder-name"
+                                    name="card-holder-name"
+                                    autocomplete="off"
+                                    placeholder="card holder name"
+                                    value="Huggss Acdc"/>
+                                <div>
+                                <!-- Card billing address -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label for="card-billing-address-street">Billing Address</label>
+                                        <input type="text" id="card-billing-address-street" name="card-billing-address-street" autocomplete="off" placeholder="street address" value="2211 N First Street"/>
+                                    </div>
+                                </div>   
+                                <div class="row">
+                                    <div class="col-7">
+                                        <input type="text" id="card-billing-address-unit" name="card-billing-address-unit" autocomplete="off" placeholder="unit" value="Building 17"/>
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="text" id="card-billing-address-city" name="card-billing-address-city" autocomplete="off" placeholder="city" value="San Jose"/>
+                                    </div>
+                                </div>  
+                                <div class="row">
+                                    <div class="col-4">
+                                        <input type="text" id="card-billing-address-zip" name="card-billing-address-zip" autocomplete="off" placeholder="zip / postal code" value="95131"/>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="text" id="card-billing-address-state" name="card-billing-address-state" autocomplete="off" placeholder="state" value="CA"/>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="text" id="card-billing-address-country" name="card-billing-address-country" autocomplete="off" placeholder="country code" value="US"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <br>
+                            <div class="form-check">
+                                <input class="form-check-input move-left" type="checkbox" value="" id="vault_cc" name="vault_cc">
+                                <label class="form-check-label" for="vault_cc">Save your card</label>
+                            </div>
+                        
+                            <!--<br/>
+                            <button value="submit" id="submit" class="button">
+                            <span style="background-color: rgb(20, 123, 233);">Pay by Credit Card Now</span></button>-->
+                            <!-- Submit buttons -->
+                            <br>
+                            <div>
+                                <button id="submit" value="submit" class="btn btn-lg btn-success btn-block">
+                                    <i class="fa fa-lock fa-lg"></i>&nbsp;
+                                    <span id="payment-button-amount">Pay</span>
+                                    <span id="payment-button-sending" style="display:none;">Sending…</span>
+                                </button>
+
+                                <button class="btn btn-lg btn-secondary btn-block" onclick="location.href='/'" type="button">
+                                    <span>Cancel</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <br/><br/>
+                        <h5>Success Transaction</h5>
+                        <table cellpadding="0" cellspacing="0">
+                            <tbody id="txn"></tbody>
+                        </table>
+                        <br/><br/>
+                        <h5>API Response: </h5>
+                        <div id="result"></div>     
+                    </div>
+
+                    <aside class="drawer dark" id="sidebar" hidden>
+                        <article class="content compact">
+                            <section>
+                                <h5>Transaction</h5>
+                                <table cellpadding="0" cellspacing="0">
+                                    <tbody id="txn"></tbody>
+                                </table>
+                            </section>              
+                        </article>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    
+    </div>
+</div>
+
+<!-- Include the PayPal JavaScript SDK -->
+<!--data-user-id-token="{{ cust_id }}">  -->
+<script
+    src="https://www.paypal.com/sdk/js?components=buttons,messages,hosted-fields&currency={{ curr }}&client-id={{ client_id }}"
+    data-client-token="{{ client_token }}"
+    data-user-id-token="{{ id_token }}" >
+</script>
+
+<script>
+    var today = new Date();
+    // Render the PayPal button into #paypal-button-container
+    paypal.Buttons({
+        // Sets up the transaction when a payment button is clicked
+        createOrder: function (data, actions) {
+            return fetch("/pp/spb/order/create", {
+                method: "post",
+                body: JSON.stringify({
+                    source: data.paymentSource, //paypal / venmo / etc.
+                    vault_pp: document.querySelector('#vault-pp').checked,
+                    currency: document.getElementById('currency').value,
+                    amount: document.getElementById('amount').value,
+                    token: "paypal"
+                }),
+            })
+            .then((response) => response.json())
+            .then((order) => order.id);
+        },
+
+        // Finalize the transaction after payer approval
+        onApprove: function (data, actions) {
+            return fetch(`/pp/spb/order/${data.orderID}/capture`, {
+                method: "post",
+            })
+            .then((response) => response.json())
+            .then((orderData) => {
+                // Successful capture! For dev/demo purposes:
+                console.log("Capture result",orderData,JSON.stringify(orderData, null, 2));
+                const transaction = orderData.purchase_units[0].payments.captures[0];
+                //alert(`Transaction ${transaction.status}: ${transaction.id}
+                window.location.href = `/pp/find/payment/${transaction.id}`;
+            });
+        },
+    }).render("#paypal-button-container");
+
+    // If this returns false or the card fields aren't visible, see Step #1.
+    if (paypal.HostedFields.isEligible()) {
+        let orderId;
+        // Renders card fields
+        paypal.HostedFields.render({
+            // Style of the hosted fields
+            styles: {
+                'input': {
+                    'color': '#3A3A3A',
+                    'transition': 'color 160ms linear',
+                    '-webkit-transition': 'color 160ms linear'
+                },
+                ".valid": { color: "green",},
+                ".invalid": { color: "red",},
+            },
+            fields: {
+                number: {
+                    selector: "#card-number",
+                    placeholder: "4111 1111 1111 1111",
+                },
+                cvv: {
+                    selector: "#cvv",
+                    placeholder: "123",
+                },
+                expirationDate: {
+                    selector: "#expiration-date",
+                    placeholder: "MM/YY",
+                },
+            },
+            // Call your server to set up the transaction
+            createOrder: () => {
+                console.log("card create order: " + document.getElementById('currency').value,);
+                return fetch('/pp/spb/order/create', {
+                    method: "post",
+                    body: JSON.stringify({
+                        source: "card", 
+                        vault_cc: document.querySelector('#vault_cc').checked,
+                        currency: document.getElementById('currency').value,
+                        amount: document.getElementById('amount').value,
+                        token: "card"
+                    })
+                })
+                .then((res) => res.json())
+                .then((orderData) => {
+                    console.log(orderData);
+                    orderId = orderData.id
+                    return orderId
+                })
+            },
+        }).then((cardFields) => {
+            document.querySelector('#card-form').addEventListener("submit", (event) => {
+                event.preventDefault();
+                cardFields.submit({
+                    // Vault Card
+                    vault: document.querySelector('#vault_cc').checked,
+                    // Trigger 3D Secure authentication
+                    //contingencies: ['SCA_ALWAYS'],
+                    // Cardholder's first and last name
+                    cardholderName: document.getElementById("card-holder-name").value,
+                    // Billing Address
+                    billingAddress: {
+                        // Street address, line 1
+                        streetAddress: document.getElementById("card-billing-address-street").value,
+                        // Street address, line 2 (Ex: Unit, Apartment, etc.)
+                        extendedAddress: document.getElementById("card-billing-address-unit").value,
+                        // State
+                        region: document.getElementById("card-billing-address-state").value,
+                        // City
+                        locality: document.getElementById("card-billing-address-city").value,
+                        // Postal Code
+                        postalCode: document.getElementById("card-billing-address-zip").value,
+                        // Country Code
+                        countryCodeAlpha2: document.getElementById("card-billing-address-country").value,
+                    }
+                })
+                // For non 3DS , not enabled
+                //.then(() => {
+                // For 3DS enabled
+                .then(function (threeds) {
+                    //console.log('3DS: ' + JSON.stringify(threeds));
+                    fetch(`/pp/spb/order/${orderId}`, { method: "get" })
+                    .then((res) => res.json())
+                    .then((orderData) => {
+                        /*console.log('order: '+ JSON.stringify(orderData));
+                        liabilityShifted = orderData.payment_source.card.authentication_result.liability_shift
+                        authentication = orderData.payment_source.card.authentication_result.three_d_secure.authentication_status
+                        enrollment = orderData.payment_source.card.authentication_result.three_d_secure.enrollment_status
+                        console.log('3ds: '+ JSON.stringify(liabilityShifted+" "+authentication+" "+enrollment));
+
+                        if((liabilityShifted == 'POSSIBLE' && authentication == 'Y' && enrollment == 'Y')
+                        || (liabilityShifted == 'POSSIBLE' && authentication == 'A' && enrollment == 'Y')
+                        || (liabilityShifted == 'NO' && enrollment == 'U')
+                        || (liabilityShifted == 'NO' && enrollment == 'N')
+                        || (liabilityShifted == 'NO' && enrollment == 'B')) {*/
+                            fetch(`/pp/spb/order/${orderId}/capture`, {
+                                method: "post",
+                            })
+                            .then((res) => res.json())
+                            .then((captureData) => {
+                                // Two cases to handle:
+                                //   (1) Other non-recoverable errors -> Show a failure message
+                                //   (2) Successful transaction -> Show confirmation or thank you
+                                const errorDetail =
+                                Array.isArray(captureData.details) && captureData.details[0];
+                                if (errorDetail) {
+                                    var msg = "Sorry, your transaction could not be processed.";
+                                    if (errorDetail.description)
+                                        msg += "\n\n" + errorDetail.description;
+                                        if (captureData.debug_id) msg += " (" + captureData.debug_id + ")";
+                                            return alert(msg); // Show a failure message
+                                }
+
+                                // Show a success message or redirect
+                                console.log("Capture result",captureData);
+                                // redirect to display result
+                                const transaction = captureData.purchase_units[0].payments.captures[0];
+                                window.location.href = `/pp/find/payment/${transaction.id}`;
+                                //show(captureData)  //show result on same page
+                                // Clear card form
+                                document.getElementById("card-form").style.display="none"
+                                document.getElementById("paypal-button-container").style.display="none"
+                            })
+                        /*} else {
+                            document.getElementById("card-form").style.display="none"
+                            alert('3DS failed: liability not shifted, transaction will not proceed');
+                        }*/
+                    })
+                })
+                .catch((err) => {
+                    console.log(JSON.stringify(err));
+                    alert("Payment could not be captured! " + JSON.stringify(err));  
+                })
+            })
+        })
+    } else {
+        // Hides card fields if the merchant isn't eligible
+        document.querySelector("#card-form").style = "display: none";
+        console.log("hostedfield eligibility: " + paypal.HostedFields.isEligible());
+    }
+    
+</script>
+
+<!-- To handle success html display -->
+<script>
+    var vaulted_pp = "{{ vaultppalr }}"
+    var x = document.getElementById("vault-pp-select");
+    x.style.display = "block"
+    console.log("vaultalr: " + vaulted_pp)
+    var amt = document.getElementById("amount");
+
+    // hide pp vault checkbox if customer had already vaulted their pp account before
+    if(vaulted_pp === 'Y') {
+        console.log('vaultpp is done, hide checkbox')
+        if (x.style.display === "block") {
+            x.style.display = "none";
+        } 
+    } else {
+        console.log('vaultpp not done, show checkbox')
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } 
+    }
+
+    // Control tooltip
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
+    
+    // Update amount when amount value is changed
+    amt.addEventListener('input', function (evt) {
+        console.log(this.value, ' ', );
+        document.getElementById("payment-button-amount").innerText = 'Pay $' + this.value;
+    });
+
+    // Disply result on same page
+    function show(data,payload) {
+        let tab = 
+            `<tr>
+                <td>PayPal Transaction Id</th>
+                <td>${data.purchase_units[0].payments.captures[0].id} </td>
+             </tr>
+             <tr>
+                <td>Payment Status</th>
+                <td>${data.purchase_units[0].payments.captures[0].status}</td>
+             </tr>
+             <tr>
+                <td>Currency</th>
+                <td>${data.purchase_units[0].payments.captures[0].amount.currency_code}</td>
+             </tr>
+             <tr>
+                <td>Currency</th>
+                <td>${data.purchase_units[0].payments.captures[0].amount.value}</td>
+             </tr>
+             <tr>
+                <td>Seller Protection Status</th>
+                <td>${data.purchase_units[0].payments.captures[0].seller_protection.status}</td>
+             </tr>
+             <tr>
+                <td>Reference Id</th>
+                <td>${data.purchase_units[0].reference_id}</td>
+             </tr>`;
+        //&& payload.liabilityShifted
+        if (data.payment_source.card ) {
+            tab += `
+                <h5>Card Liability Shift Successful!</h5>
+                <tr> 
+                    <td>Card Brand</th>
+                    <td>${data.payment_source.card.brand}</td>        
+                </tr>
+                <tr> 
+                    <td>Card last 4 Digits</th>
+                    <td>${data.payment_source.card.last_digits}</td>        
+                </tr>
+                <tr> 
+                    <td>Card Type</th>
+                    <td>${data.payment_source.card.type}</td>        
+                </tr>
+                `;
+        }
+        // Setting innerHTML as tab variable
+        document.getElementById("txn").innerHTML = tab;
+    }
+</script>
+
+{% endblock %}
+
+
